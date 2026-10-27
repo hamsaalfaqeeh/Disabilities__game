@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تحدّي التمكين</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;500;700;800&display=swap">
+<style>
+/* Layout: one-screen board game, big touch targets for a classroom smartboard; single bright theme (projectors wash out dark) */
+:root{
+  --bg:#F6EFFA;
+  --ink:#2A1640;
+  --muted:#6D5A82;
+  --plum:#5B2A86;
+  --rose:#E0457B;
+  --teal:#0E9C9C;
+  --sun:#FFB627;
+  --leaf:#2BA35F;
+  --red:#D63B4A;
+  --card:#FFFFFF;
+  --line:#E4D6F0;
+  --s1:#E0457B; --s2:#0E9C9C; --s3:#7A4BC4; --s4:#F08A24;
+  --display:"Lalezar","Tajawal",system-ui,sans-serif;
+  --body:"Tajawal","Segoe UI",Tahoma,system-ui,sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:clamp(16px,1.4vw,22px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background-image:radial-gradient(circle at 8% 12%, #F2DDF0 0 120px, transparent 121px),radial-gradient(circle at 94% 88%, #DDF1F0 0 160px, transparent 161px);
+  background-attachment:fixed;overflow-x:hidden}
+.app{max-width:1280px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding-block:16px;gap:16px}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible{outline:4px solid var(--sun);outline-offset:3px}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;line-height:1.25}
+[hidden]{display:none!important}
+
+/* top bar */
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-size:1.5em;color:var(--plum);display:flex;align-items:center;gap:10px}
+.brand svg{width:40px;height:40px}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:6px 16px;font-weight:800;font-variant-numeric:tabular-nums}
+.pill svg{width:24px;height:24px}
+.ghost{border:2px solid var(--line);background:var(--card);border-radius:14px;padding:8px 14px;font-weight:700;font-size:.85em}
+.ghost:hover{border-color:var(--plum)}
+
+/* home */
+.home{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:center;flex:1}
+.hero h1{font-size:clamp(2.6em,5vw,4.2em);color:var(--plum)}
+.hero h1 span{color:var(--rose)}
+.hero p{font-size:1.15em;color:var(--muted);max-width:34ch;line-height:1.7;margin:12px 0 22px}
+.how{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.how div{display:flex;gap:12px;align-items:center;font-weight:500}
+.how b{flex:none;width:36px;height:36px;border-radius:50%;background:var(--plum);color:#fff;display:grid;place-items:center;font-family:var(--display);font-size:1.1em}
+.big{font-family:var(--display);font-size:1.6em;background:var(--rose);color:#fff;border-radius:20px;padding:14px 36px;box-shadow:0 6px 0 #A82A57;transition:transform .12s}
+.big:hover{transform:translateY(-2px)}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 #A82A57}
+.settings{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:22px;color:var(--muted);font-weight:700}
+.chip{border:2px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;font-weight:700}
+.chip[aria-pressed="true"]{background:var(--plum);border-color:var(--plum);color:#fff}
+.stages{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.stage{background:var(--card);border-radius:24px;padding:20px;text-align:start;display:flex;flex-direction:column;gap:8px;border:3px solid transparent;box-shadow:0 8px 24px rgba(91,42,134,.10);transition:transform .15s,border-color .15s;position:relative;overflow:hidden}
+.stage:hover{transform:translateY(-3px);border-color:var(--c)}
+.stage::after{content:"";position:absolute;inset-inline-end:-30px;top:-30px;width:100px;height:100px;border-radius:50%;background:var(--c);opacity:.14}
+.stage .n{font-family:var(--display);font-size:2.2em;color:var(--c);line-height:1}
+.stage h3{font-size:1.35em}
+.stage small{color:var(--muted);font-weight:500;font-size:.85em}
+.stage .done{position:absolute;top:14px;inset-inline-start:14px;font-weight:800;font-size:.8em;color:var(--leaf)}
+
+/* question */
+.qwrap{flex:1;display:flex;flex-direction:column;gap:16px}
+.qhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tag{font-family:var(--display);font-size:1.15em;color:#fff;background:var(--c);border-radius:14px;padding:6px 16px}
+.dots{display:flex;gap:6px}
+.dots i{width:14px;height:14px;border-radius:50%;background:var(--line)}
+.dots i.ok{background:var(--leaf)} .dots i.no{background:var(--red)} .dots i.cur{background:var(--c);transform:scale(1.25)}
+.turn{display:flex;align-items:center;gap:14px;background:var(--plum);color:#fff;border-radius:22px;padding:12px 22px;align-self:flex-start;animation:pop .4s ease}
+.turn .who{font-family:var(--display);font-size:1.5em}
+.turn small{opacity:.8;font-weight:500}
+.avatar{width:52px;height:52px;flex:none}
+.qcard{background:var(--card);border-radius:28px;padding:clamp(20px,3vw,40px);box-shadow:0 12px 36px rgba(91,42,134,.12);display:flex;flex-direction:column;gap:22px;border-top:8px solid var(--c)}
+.ask{color:var(--muted);font-weight:700;font-size:1.05em}
+.prompt{font-family:var(--display);font-size:clamp(1.6em,3.2vw,2.6em);color:var(--ink);line-height:1.45}
+.opts{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr))}
+.opt{background:var(--bg);border:3px solid var(--line);border-radius:20px;padding:18px 18px;font-size:1.25em;font-weight:800;text-align:start;display:flex;align-items:center;gap:14px;min-height:84px;transition:transform .12s,border-color .12s,background .12s}
+.opt:hover:not(:disabled){border-color:var(--c);transform:translateY(-2px)}
+.opt .k{flex:none;width:40px;height:40px;border-radius:12px;background:var(--card);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-size:1em;color:var(--c)}
+.opt:disabled{cursor:default}
+.opt.right{background:#E3F6EA;border-color:var(--leaf)} .opt.right .k{background:var(--leaf);border-color:var(--leaf);color:#fff}
+.opt.wrong{background:#FCE6E8;border-color:var(--red);animation:shake .4s} .opt.wrong .k{background:var(--red);border-color:var(--red);color:#fff}
+.opt.gone{opacity:.25;filter:grayscale(1)}
+.opt.dim{opacity:.55}
+.tf .opt{min-height:110px;font-size:1.45em;justify-content:center}
+.qfoot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.help{display:inline-flex;align-items:center;gap:8px;border:2px dashed var(--teal);color:var(--teal);border-radius:14px;padding:8px 14px;font-weight:800}
+.help:disabled{opacity:.4;cursor:default}
+.timer{display:flex;align-items:center;gap:10px;font-weight:800;font-variant-numeric:tabular-nums;min-width:200px}
+.track{flex:1;height:12px;border-radius:99px;background:var(--line);overflow:hidden;min-width:140px}
+.track b{display:block;height:100%;background:var(--teal);transition:width 1s linear}
+.track b.low{background:var(--red)}
+
+.fb{border-radius:22px;padding:18px 22px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;animation:pop .35s ease}
+.fb.ok{background:#E3F6EA;border:3px solid var(--leaf)}
+.fb.no{background:#FFF3DC;border:3px solid var(--sun)}
+.fb .msg{flex:1;min-width:0}
+.fb h3{font-size:1.6em}
+.fb.ok h3{color:var(--leaf)} .fb.no h3{color:#B5650B}
+.fb p{margin:4px 0 0;line-height:1.7;font-weight:500}
+.next{font-family:var(--display);font-size:1.3em;background:var(--plum);color:#fff;border-radius:16px;padding:10px 26px;box-shadow:0 5px 0 #3B1A58}
+.next:active{transform:translateY(3px);box-shadow:0 2px 0 #3B1A58}
+
+/* stage end + final */
+.center{flex:1;display:flex;align-items:center;justify-content:center}
+.panel{background:var(--card);border-radius:32px;padding:clamp(24px,4vw,48px);box-shadow:0 14px 40px rgba(91,42,134,.14);text-align:center;max-width:760px;width:100%;display:flex;flex-direction:column;gap:18px;align-items:center;position:relative}
+.panel h2{font-size:clamp(2em,4vw,3em);color:var(--plum)}
+.panel p{margin:0;color:var(--muted);font-size:1.1em;line-height:1.7}
+.stars{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.stars svg{width:clamp(34px,4vw,52px);height:auto}
+.score{font-family:var(--display);font-size:3.2em;color:var(--rose);line-height:1;font-variant-numeric:tabular-nums}
+.rows{width:100%;display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:minmax(0,10em) 1fr auto;gap:12px;align-items:center;text-align:start;font-weight:700}
+.row .track b{background:var(--c)}
+.btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.value{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.value span{background:var(--bg);border-radius:99px;padding:6px 14px;font-weight:700;color:var(--plum);font-size:.9em}
+canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:50;width:100%;height:100%}
+
+@keyframes pop{from{transform:scale(.92);opacity:.4}to{transform:none;opacity:1}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width:820px){
+  .home{grid-template-columns:1fr}
+  .stages{grid-template-columns:1fr 1fr}
+  .row{grid-template-columns:1fr auto}
+  .row .track{grid-column:1/-1;grid-row:2}
+}
+@media (max-width:460px){.stages{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app" dir="rtl" lang="ar">
+  <header class="bar">
+    <div class="brand">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="var(--plum)"/><path d="M24 11l3.8 7.7 8.5 1.2-6.1 6 1.4 8.4L24 30.3l-7.6 4 1.4-8.4-6.1-6 8.5-1.2z" fill="var(--sun)"/></svg>
+      تحدّي التمكين
+    </div>
+    <div class="spacer"></div>
+    <span class="pill" id="starPill" title="نجوم الصف">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 16.9 6.1 20l1.2-6.5L2.5 8.9 9.1 8z" fill="var(--sun)"/></svg>
+      <span id="starCount">0</span>
+    </span>
+    <button class="ghost" id="homeBtn" hidden>القائمة</button>
+    <button class="ghost" id="fsBtn">ملء الشاشة</button>
+  </header>
+
+  <!-- HOME -->
+  <main id="home" class="home">
+    <section class="hero">
+      <h1>تحدّي <span>التمكين</span></h1>
+      <p>لعبة صفّية على درس «التعامل مع الأطفال ذوي الإعاقة». في كل سؤال تأتي طالبة إلى اللوح وتجيب بنفسها.</p>
+      <div class="how">
+        <div><b>١</b>تظهر رسالة «دور الطالبة رقم…» فتتقدّم طالبة جديدة.</div>
+        <div><b>٢</b>تقرأ السؤال بصوت عالٍ وتلمس إجابتها على اللوح.</div>
+        <div><b>٣</b>كل إجابة صحيحة تضيف نجمة لرصيد الصف.</div>
+      </div>
+      <button class="big" id="startAll">ابدئي اللعب</button>
+      <div class="settings" role="group" aria-label="المؤقّت">
+        المؤقّت:
+        <button class="chip" data-t="0" aria-pressed="true">بدون</button>
+        <button class="chip" data-t="30" aria-pressed="false">٣٠ ثانية</button>
+        <button class="chip" data-t="45" aria-pressed="false">٤٥ ثانية</button>
+      </div>
+    </section>
+    <section class="stages" id="stageGrid" aria-label="المراحل"></section>
+  </main>
+
+  <!-- QUESTION -->
+  <main id="quiz" class="qwrap" hidden>
+    <div class="qhead">
+      <span class="tag" id="qTag"></span>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="turn" id="turn">
+      <svg class="avatar" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="26" fill="#ffffff22"/><circle cx="26" cy="21" r="9" fill="var(--sun)"/><path d="M10 44c2-9 9-13 16-13s14 4 16 13" fill="var(--sun)"/><path d="M15 22c0-9 5-14 11-14s11 5 11 14c-2-5-6-8-11-8s-9 3-11 8z" fill="var(--rose)"/></svg>
+      <div><div class="who" id="who"></div><small>تفضّلي إلى اللوح</small></div>
+    </div>
+    <article class="qcard" id="qcard">
+      <div class="ask" id="ask"></div>
+      <div class="prompt" id="prompt"></div>
+      <div class="opts" id="opts"></div>
+      <div id="fb"></div>
+      <div class="qfoot">
+        <button class="help" id="helpBtn">
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8 12h8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          حذف إجابتين <small id="helpLeft"></small>
+        </button>
+        <div class="spacer"></div>
+        <div class="timer" id="timer" hidden><span id="tLeft"></span><div class="track"><b id="tBar"></b></div></div>
+      </div>
+    </article>
+  </main>
+
+  <!-- STAGE END -->
+  <main id="stageEnd" class="center" hidden>
+    <div class="panel">
+      <h2 id="seTitle"></h2>
+      <div class="stars" id="seStars"></div>
+      <p id="seText"></p>
+      <div class="btns">
+        <button class="big" id="seNext"></button>
+        <button class="ghost" id="seMenu">العودة للقائمة</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- FINAL -->
+  <main id="final" class="center" hidden>
+    <div class="panel">
+      <h2 id="fTitle"></h2>
+      <div class="score" id="fScore"></div>
+      <p id="fText"></p>
+      <div class="rows" id="fRows"></div>
+      <div class="value"><span>الاحترام</span><span>العدالة</span><span>المساواة</span><span>التمكين</span><span>التعاطف</span><span>الاندماج الاجتماعي</span><span>تقبّل التنوّع</span></div>
+      <div class="btns"><button class="big" id="again">العبي من جديد</button></div>
+    </div>
+  </main>
+</div>
+<canvas id="fx" hidden></canvas>
+
+<script>
+const AR = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+const STAR = (on) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 16.9 6.1 20l1.2-6.5L2.5 8.9 9.1 8z" fill="${on ? 'var(--sun)' : 'var(--line)'}"/></svg>`;
+
+const STAGES = [
+  { name:'أنواع الإعاقات', color:'var(--s1)', sub:'صنّفي الحالة إلى نوعها الصحيح',
+    ask:'إلى أيّ نوعٍ من الإعاقات تنتمي هذه الحالة؟',
+    options:['جسدية','حسّية','ذهنية','نفسية','عقلية'], help:true,
+    qs:[
+      {p:'الشلل الرباعي', a:0, ex:'الشلل بأنواعه (رباعي، نصفي) يؤثّر في القدرة الحركية، فهو إعاقة جسدية.'},
+      {p:'فقدان البصر كليًّا', a:1, ex:'فقدان السمع أو البصر، جزئيًّا أو كليًّا، إعاقة حسّية.'},
+      {p:'تأخّر النموّ العقلي وعجز التعلّم العام', a:2, ex:'في الإعاقة الذهنية يكون التفكير والإدراك والتصرّفات أصغر من العمر الزمني.'},
+      {p:'الوسواس القهري غير المستجيب للعلاج', a:3, ex:'الوسواس القهري غير المستجيب للعلاج من الإعاقات النفسية، مثل الاكتئاب الحاد والفصام العقلي.'},
+      {p:'الصرع غير المستجيب للعلاج', a:4, ex:'يصنّف الدرس الصرع غير المستجيب للعلاج ضمن الإعاقة العقلية، مع الشلل الدماغي والتوحّد.'},
+    ]},
+  { name:'حاجات الطفل', color:'var(--s2)', sub:'اختاري نوع الحاجة المناسب',
+    ask:'أيّ نوعٍ من حاجات الطفل ذي الإعاقة يمثّل هذا؟',
+    options:['نفسية واجتماعية','تعليمية وتأهيلية','صحية وطبية','أُسرية','ترفيهية وثقافية'], help:true,
+    qs:[
+      {p:'توفير لغة الإشارة وطريقة برايل في المدرسة', a:1, ex:'وسائل التعليم المناسبة مثل لغة الإشارة وبرايل من الحاجات التعليمية والتأهيلية.'},
+      {p:'توفير كرسي متحرّك أو سمّاعة طبية', a:2, ex:'توفير الأجهزة المساعدة من الحاجات الصحية والطبية، ومعه العلاج الطبيعي.'},
+      {p:'توعية الأهل بكيفية التعامل مع طفلهم', a:3, ex:'دعم الأسرة وتوعيتها بكيفية التعامل مع الطفل حاجة أُسرية.'},
+      {p:'أن يشعر الطفل بالانتماء ويتقبّله المجتمع دون تمييز', a:0, ex:'الانتماء والتقدير وتقبّل المجتمع وعدم التمييز حاجات نفسية واجتماعية.'},
+      {p:'توفير أماكن ترفيه آمنة ودمج الطفل في الأنشطة المجتمعية', a:4, ex:'أماكن الترفيه المناسبة والآمنة والدمج في الأنشطة حاجات ترفيهية وثقافية.'},
+    ]},
+  { name:'تصرّفٌ سليم؟', color:'var(--s3)', sub:'احكمي على التصرّف في كل موقف',
+    ask:'هل هذا التصرّف سليم في التعامل مع الطفل ذي الإعاقة؟',
+    options:['تصرّفٌ سليم','تصرّفٌ غير سليم'], help:false, tf:true,
+    qs:[
+      {p:'قالت سلمى عن زميلتها: «هي طفلة مُقعَدة».', a:1, ex:'الأفضل أن نركّز على الشخص قبل الإعاقة فنقول: «طفلة تستخدم الكرسي المتحرّك».'},
+      {p:'وجّهت ليان أسئلتها إلى مرافِقة الطفلة بدلًا من الحديث مع الطفلة نفسها.', a:1, ex:'نتحدّث مباشرة مع الطفل بنبرة ودّية وبسيطة تناسب عمره وفهمه.'},
+      {p:'حرّكت رهف كرسي زميلتها المتحرّك من مكانه دون أن تستأذنها.', a:1, ex:'الأدوات المساعدة جزء من خصوصية الطفل، فلا نلمسها دون إذن.'},
+      {p:'مدحت تالا رسمة زميلتها الجميلة كما تمدح أي زميلة أخرى.', a:0, ex:'نمدح الإنجاز الحقيقي بالطريقة نفسها التي نمدح بها أي طفل، دون شفقة أو مبالغة.'},
+      {p:'دعت الطالبات زميلتهن ذات الإعاقة السمعية للمشاركة في مسابقة الصف.', a:0, ex:'إشراك الطفل في الأنشطة الاجتماعية والترفيهية مع الآخرين من التعامل السليم.'},
+    ]},
+  { name:'سؤال وجواب', color:'var(--s4)', sub:'اختاري الإجابة الصحيحة',
+    ask:'اختاري الإجابة الصحيحة:', help:true, shuffle:true,
+    qs:[
+      {p:'حصل الدكتور طه حسين على درجة الدكتوراه من جامعة:', o:['السوربون','القاهرة','أكسفورد','بغداد'], a:0, ex:'طه حسين، المولود في مصر عام 1889م، فقد بصره مبكرًا وحصل على الدكتوراه من جامعة السوربون.'},
+      {p:'ما نوع الإعاقة التي تحدّاها طه حسين ليصبح من أعلام الأدب العربي؟', o:['بصرية','سمعية','حركية','نطقية'], a:0, ex:'فقد طه حسين بصره في سنّ مبكرة، ومع ذلك أصبح من أعلام الأدب العربي.'},
+      {p:'الأدوات المساعدة مثل العكّازات والأجهزة السمعية تُعَدّ جزءًا من:', o:['خصوصية الطفل','أدوات الصف المشتركة','ألعاب الطفل','ممتلكات المدرسة'], a:0, ex:'لذلك نحترمها ولا نلمسها دون إذن صاحبها.'},
+      {p:'من يساعد الأشخاص ذوي الإعاقة على تحسين قدراتهم الحركية والوظيفية؟', o:['العلاج الطبيعي والوظيفي','مصمّم الأزياء','مهندس البرمجيات','المحاسب'], a:0, ex:'يقدّم العلاج الطبيعي والوظيفي تدخّلات علاجية لتحسين القدرات الحركية والوظيفية.'},
+      {p:'أيّ ممّا يأتي يرفع الوعي بكيفية التعامل مع ذوي الإعاقة؟', o:['نشر فيديوهات قصيرة عن قصص نجاح ملهمة','تجنّب الحديث عن الموضوع','فصل الطلبة ذوي الإعاقة عن زملائهم','السخرية من الاختلاف'], a:0, ex:'من وسائل التوعية: المنشورات على مواقع التواصل، الفيديوهات القصيرة، والمطويات والملصقات في المدرسة.'},
+    ]},
+];
+
+const S = { timer:0, stage:0, q:0, turn:0, stars:0, order:[], res:STAGES.map(()=>[]), helpLeft:0, locked:false, played:new Set(), single:false, tId:null, tLeft:0, removed:[] };
+const $ = id => document.getElementById(id);
+const screens = ['home','quiz','stageEnd','final'];
+function show(id){ screens.forEach(s => $(s).hidden = s !== id); $('homeBtn').hidden = id === 'home'; window.scrollTo(0,0); }
+function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function setStars(){ $('starCount').textContent = AR(S.stars); }
+
+function renderGrid(){
+  $('stageGrid').innerHTML = STAGES.map((st,i)=>{
+    const r = S.res[i], done = r.length === st.qs.length;
+    const ok = r.filter(Boolean).length;
+    return `<button class="stage" data-i="${i}" style="--c:${st.color}">
+      ${done ? `<span class="done">✓ ${AR(ok)}/${AR(st.qs.length)}</span>` : ''}
+      <span class="n">${AR(i+1)}</span><h3>${st.name}</h3><small>${st.sub} · ${AR(st.qs.length)} أسئلة</small></button>`;
+  }).join('');
+  $('stageGrid').querySelectorAll('.stage').forEach(b => b.onclick = () => { S.single = true; startStage(+b.dataset.i); });
+}
+
+function startStage(i){
+  S.stage = i; S.q = 0; S.res[i] = [];
+  S.order = shuffle(STAGES[i].qs.map((_,k)=>k));
+  S.helpLeft = STAGES[i].help ? 2 : 0;
+  show('quiz'); renderQ();
+}
+
+function renderQ(){
+  const st = STAGES[S.stage], q = st.qs[S.order[S.q]];
+  S.turn++; S.locked = false; S.removed = [];
+  document.querySelector('#quiz').style.setProperty('--c', st.color);
+  $('qTag').textContent = `المرحلة ${AR(S.stage+1)}: ${st.name}`;
+  $('dots').innerHTML = st.qs.map((_,k)=>`<i class="${k<S.q ? (S.res[S.stage][k]?'ok':'no') : k===S.q ? 'cur' : ''}"></i>`).join('');
+  $('who').textContent = `دور الطالبة رقم ${AR(S.turn)}`;
+  const t = $('turn'); t.style.animation='none'; t.offsetHeight; t.style.animation='';
+  $('ask').textContent = st.ask;
+  $('prompt').textContent = q.p;
+  let opts = (q.o || st.options).map((text,idx)=>({text,idx}));
+  if (st.shuffle) opts = shuffle(opts);
+  $('opts').className = 'opts' + (st.tf ? ' tf' : '');
+  $('opts').innerHTML = opts.map((o,n)=>`<button class="opt" data-idx="${o.idx}"><span class="k">${AR(n+1)}</span><span>${o.text}</span></button>`).join('');
+  $('opts').querySelectorAll('.opt').forEach(b => b.onclick = () => answer(+b.dataset.idx));
+  $('fb').innerHTML = '';
+  $('helpBtn').hidden = !st.help;
+  $('helpBtn').disabled = S.helpLeft <= 0;
+  $('helpLeft').textContent = st.help ? `(متبقٍّ ${AR(S.helpLeft)})` : '';
+  startTimer();
+}
+
+function startTimer(){
+  clearInterval(S.tId);
+  $('timer').hidden = !S.timer;
+  if (!S.timer) return;
+  S.tLeft = S.timer; tick();
+  S.tId = setInterval(()=>{ S.tLeft--; tick(); if (S.tLeft <= 0){ clearInterval(S.tId); answer(-1); } }, 1000);
+}
+function tick(){
+  $('tLeft').textContent = `${AR(Math.max(0,S.tLeft))} ث`;
+  const b = $('tBar'); b.style.width = (100*S.tLeft/S.timer)+'%'; b.classList.toggle('low', S.tLeft <= 10);
+}
+
+function useHelp(){
+  if (S.locked || S.helpLeft <= 0) return;
+  const q = STAGES[S.stage].qs[S.order[S.q]];
+  const wrong = shuffle([...$('opts').querySelectorAll('.opt')].filter(b => +b.dataset.idx !== q.a)).slice(0,2);
+  wrong.forEach(b => { b.classList.add('gone'); b.disabled = true; });
+  S.helpLeft--; $('helpBtn').disabled = true;
+  $('helpLeft').textContent = `(متبقٍّ ${AR(S.helpLeft)})`;
+}
+
+const PRAISE = ['أحسنتِ!','إجابة رائعة!','ممتاز!','برافو!','صحيح تمامًا!'];
+function answer(idx){
+  if (S.locked) return; S.locked = true; clearInterval(S.tId);
+  const st = STAGES[S.stage], q = st.qs[S.order[S.q]];
+  const ok = idx === q.a;
+  S.res[S.stage][S.q] = ok;
+  if (ok){ S.stars++; setStars(); }
+  $('opts').querySelectorAll('.opt').forEach(b => {
+    const i = +b.dataset.idx; b.disabled = true;
+    if (i === q.a) b.classList.add('right');
+    else if (i === idx) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  const last = S.q === st.qs.length - 1;
+  const head = ok ? PRAISE[Math.floor(Math.random()*PRAISE.length)] : (idx === -1 ? 'انتهى الوقت!' : 'محاولة جيدة!');
+  const lead = ok ? '' : `الإجابة الصحيحة: <b>${(q.o||st.options)[q.a]}</b>. `;
+  $('fb').innerHTML = `<div class="fb ${ok?'ok':'no'}"><div class="msg"><h3>${head}</h3><p>${lead}${q.ex}</p></div>
+    <button class="next" id="nextBtn">${last ? 'نتيجة المرحلة' : 'الطالبة التالية'}</button></div>`;
+  $('nextBtn').onclick = next; $('nextBtn').focus({preventScroll:true});
+  $('dots').querySelectorAll('i')[S.q].className = ok ? 'ok' : 'no';
+  if (ok) burst(40);
+}
+
+function next(){
+  const st = STAGES[S.stage];
+  if (S.q < st.qs.length - 1){ S.q++; renderQ(); return; }
+  S.played.add(S.stage);
+  const r = S.res[S.stage], ok = r.filter(Boolean).length;
+  $('seTitle').textContent = `انتهت مرحلة «${st.name}»`;
+  $('seStars').innerHTML = r.map(x => STAR(x)).join('');
+  $('seText').textContent = `أجابت طالبات الصف إجابة صحيحة عن ${AR(ok)} من ${AR(r.length)} أسئلة.`;
+  const nxt = S.single ? -1 : (S.stage + 1 < STAGES.length ? S.stage + 1 : -1);
+  $('seNext').textContent = nxt >= 0 ? `المرحلة ${AR(nxt+1)}: ${STAGES[nxt].name}` : (S.single ? 'اختاري مرحلة أخرى' : 'النتيجة النهائية');
+  $('seNext').onclick = () => nxt >= 0 ? startStage(nxt) : (S.single ? goHome() : finish());
+  show('stageEnd');
+  if (ok/r.length >= .7) burst(120);
+}
+
+function finish(){
+  const total = STAGES.reduce((s,st)=>s+st.qs.length,0);
+  const ok = S.res.reduce((s,r)=>s+r.filter(Boolean).length,0);
+  const pct = ok/total;
+  $('fTitle').textContent = pct >= .85 ? 'صفٌّ متمكّن!' : pct >= .6 ? 'أداء جميل!' : 'بداية طيبة، نراجع معًا';
+  $('fScore').textContent = `${AR(ok)} / ${AR(total)}`;
+  $('fText').textContent = pct >= .85 ? 'أنتنّ تعرفن كيف نحترم الأطفال ذوي الإعاقة ونمكّنهم.' : 'راجعن الأسئلة التي أخطأتن فيها، ثم جرّبن مرة أخرى.';
+  $('fRows').innerHTML = STAGES.map((st,i)=>{
+    const r = S.res[i], c = r.filter(Boolean).length, n = st.qs.length;
+    return `<div class="row" style="--c:${st.color}"><span>${st.name}</span><div class="track"><b style="width:${100*c/n}%"></b></div><span>${AR(c)}/${AR(n)}</span></div>`;
+  }).join('');
+  show('final'); burst(220);
+}
+
+function goHome(){ clearInterval(S.tId); renderGrid(); show('home'); }
+function resetAll(){ S.turn=0; S.stars=0; S.res=STAGES.map(()=>[]); S.played.clear(); setStars(); }
+
+$('startAll').onclick = () => { resetAll(); S.single = false; startStage(0); };
+$('again').onclick = () => { resetAll(); goHome(); };
+$('homeBtn').onclick = goHome;
+$('seMenu').onclick = goHome;
+$('helpBtn').onclick = useHelp;
+document.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+  document.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x===c));
+  S.timer = +c.dataset.t;
+});
+$('fsBtn').onclick = () => {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(()=>{});
+  } catch(e){}
+};
+document.addEventListener('keydown', e => {
+  if ($('quiz').hidden) return;
+  if (!S.locked){
+    const n = parseInt(e.key,10);
+    const b = $('opts').querySelectorAll('.opt')[n-1];
+    if (b && !b.disabled) b.click();
+  } else if (e.key === 'Enter' && $('nextBtn') && document.activeElement !== $('nextBtn')) $('nextBtn').click();
+});
+
+/* confetti */
+const cv = $('fx'), cx = cv.getContext('2d'); let parts = [], raf = 0;
+const COLS = ['#E0457B','#0E9C9C','#FFB627','#7A4BC4','#2BA35F'];
+function burst(n){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  cv.hidden = false; cv.width = innerWidth; cv.height = innerHeight;
+  for (let i=0;i<n;i++) parts.push({x:innerWidth/2+(Math.random()-.5)*innerWidth*.6, y:innerHeight*.35, vx:(Math.random()-.5)*12, vy:-Math.random()*12-4, r:Math.random()*6+4, c:COLS[i%5], a:Math.random()*6, life:90+Math.random()*40});
+  if (!raf) loop();
+}
+function loop(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts.forEach(p=>{ p.vy+=.35; p.x+=p.vx; p.y+=p.vy; p.a+=.2; p.life--; cx.save(); cx.translate(p.x,p.y); cx.rotate(p.a); cx.fillStyle=p.c; cx.fillRect(-p.r/2,-p.r/4,p.r,p.r/2); cx.restore(); });
+  parts = parts.filter(p=>p.life>0 && p.y<cv.height+20);
+  if (parts.length) raf = requestAnimationFrame(loop); else { raf = 0; cv.hidden = true; }
+}
+
+renderGrid(); setStars();
+</script>
+</body>
+</html>
